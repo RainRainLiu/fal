@@ -14,26 +14,26 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define FAL_SW_VERSION                 "0.5.99"
+#define FAL_SW_VERSION "0.5.99"
 
 #ifndef FAL_MALLOC
-#define FAL_MALLOC                     malloc
+#define FAL_MALLOC malloc
 #endif
 
 #ifndef FAL_CALLOC
-#define FAL_CALLOC                     calloc
+#define FAL_CALLOC calloc
 #endif
 
 #ifndef FAL_REALLOC
-#define FAL_REALLOC                    realloc
+#define FAL_REALLOC realloc
 #endif
 
 #ifndef FAL_FREE
-#define FAL_FREE                       free
+#define FAL_FREE free
 #endif
 
 #ifndef FAL_DEBUG
-#define FAL_DEBUG                      0
+#define FAL_DEBUG 0
 #endif
 
 #ifndef FAL_PRINTF
@@ -50,44 +50,54 @@ extern void rt_kprintf(const char *fmt, ...);
 #ifdef assert
 #undef assert
 #endif
-#define assert(EXPR)                                                           \
-if (!(EXPR))                                                                   \
-{                                                                              \
-    FAL_PRINTF("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);        \
-    while (1);                                                                 \
-}
+#define assert(EXPR)                                                        \
+    if (!(EXPR))                                                            \
+    {                                                                       \
+        FAL_PRINTF("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__); \
+        while (1)                                                           \
+            ;                                                               \
+    }
 
 /* debug level log */
-#ifdef  log_d
-#undef  log_d
+#ifdef log_d
+#undef log_d
 #endif
-#define log_d(...)                     FAL_PRINTF("[D/FAL] (%s:%d) ", __FUNCTION__, __LINE__);           FAL_PRINTF(__VA_ARGS__);FAL_PRINTF("\n")
+#define log_d(...)                                          \
+    FAL_PRINTF("[D/FAL] (%s:%d) ", __FUNCTION__, __LINE__); \
+    FAL_PRINTF(__VA_ARGS__);                                \
+    FAL_PRINTF("\n")
 
 #else
 
 #ifdef assert
 #undef assert
 #endif
-#define assert(EXPR)                   ((void)0);
+#define assert(EXPR) ((void)0);
 
 /* debug level log */
-#ifdef  log_d
-#undef  log_d
+#ifdef log_d
+#undef log_d
 #endif
 #define log_d(...)
 #endif /* FAL_DEBUG */
 
 /* error level log */
-#ifdef  log_e
-#undef  log_e
+#ifdef log_e
+#undef log_e
 #endif
-#define log_e(...)                     FAL_PRINTF("\033[31;22m[E/FAL] (%s:%d) ", __FUNCTION__, __LINE__);FAL_PRINTF(__VA_ARGS__);FAL_PRINTF("\033[0m\n")
+#define log_e(...)                                                     \
+    FAL_PRINTF("\033[31;22m[E/FAL] (%s:%d) ", __FUNCTION__, __LINE__); \
+    FAL_PRINTF(__VA_ARGS__);                                           \
+    FAL_PRINTF("\033[0m\n")
 
 /* info level log */
-#ifdef  log_i
-#undef  log_i
+#ifdef log_i
+#undef log_i
 #endif
-#define log_i(...)                     FAL_PRINTF("\033[32;22m[I/FAL] ");                                FAL_PRINTF(__VA_ARGS__);FAL_PRINTF("\033[0m\n")
+#define log_i(...)                     \
+    FAL_PRINTF("\033[32;22m[I/FAL] "); \
+    FAL_PRINTF(__VA_ARGS__);           \
+    FAL_PRINTF("\033[0m\n")
 
 /* FAL flash and partition device name max length */
 #ifndef FAL_DEV_NAME_MAX
@@ -100,19 +110,20 @@ struct fal_flash_dev
 
     /* flash device start address and len  */
     uint32_t addr;
-    size_t len;
+    size_t   len;
     /* the block size in the flash for erase minimum granularity */
     size_t blk_size;
 
     struct
     {
-        int (*init)(void);
-        int (*read)(long offset, uint8_t *buf, size_t size);
-        int (*write)(long offset, const uint8_t *buf, size_t size);
-        int (*erase)(long offset, size_t size);
+        int (*init)(void *arg);
+        int (*read)(void *arg, long offset, uint8_t *buf, size_t size);
+        int (*write)(void *arg, long offset, const uint8_t *buf, size_t size);
+        int (*erase)(void *arg, long offset, size_t size);
+        void *ops_arg;
     } ops;
 
-    /* write minimum granularity, unit: bit. 
+    /* write minimum granularity, unit: bit.
        1(nor flash)/ 8(stm32f2/f4)/ 32(stm32f1)/ 64(stm32l4)
        0 will not take effect. */
     size_t write_gran;
@@ -132,7 +143,7 @@ struct fal_partition
     char flash_name[FAL_DEV_NAME_MAX];
 
     /* partition offset address on flash device */
-    long offset;
+    long   offset;
     size_t len;
 
     uint32_t reserved;
